@@ -1,0 +1,46 @@
+{% extends 'authapp/base.html' %}
+{% load staticfiles %}
+
+{% block errors %}
+    {% if form.non_field_errors or messages %}
+        <div class="alert
+        {% if messages %} alert-success {% else %} alert-danger {% endif %}
+        alert-dismissible fade show" role="alert"
+             style="margin-top: 50px;">
+            {% if messages %}
+                {% for i in messages %}
+                    {{ i }}
+                {% endfor %}
+            {% else %}
+                {% for i in form.non_field_errors %}
+                    {{ i }}
+                {% endfor %}
+            {% endif %}
+            {# <strong>Holy guacamole!</strong> You should check in on some of those fields below.#}
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+    {% endif %}
+{% endblock %}
+
+{% block form %}
+    <form action="{% url 'auth:login' %}" method="post">
+        {% csrf_token %}
+        {% for i in form %}
+            <div class="form-group">
+                <label class="small mb-1" for="{{ i.id_for_label }}">{{ i.label }}</label>
+                {{ i }}
+            </div>
+        {% endfor %}
+
+        <div class="form-group d-flex align-items-center justify-content-between mt-4 mb-0">
+            <a class="small" href="#">Забыли пароль?</a>
+            <input class="btn btn-primary" type="submit" value="Авторизоваться">
+        </div>
+    </form>
+{% endblock %}
+
+{% block footer %}
+    <div class="small"><a href="{% url 'auth:register' %}">Нужен аккаунт? Зарегистрируйся!</a></div>
+{% endblock %}
