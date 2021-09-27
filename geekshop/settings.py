@@ -141,4 +141,4 @@ EMAIL_HOST_PASSWORD = '9bbc016b1d5ed0'
 EMAIL_PORT = '2525'
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-# DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
