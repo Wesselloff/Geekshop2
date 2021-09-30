@@ -66,9 +66,15 @@ class UserRegisterView(CreateView):
     def post(self, request, *args, **kwargs):
         form = self.form_class(request.POST)
         if form.is_valid():
-            form.save()
-            messages.success(request, self.success_message)
-            return HttpResponseRedirect(self.success_url)
+            user = form.save()
+            if send_verify_mail(user):
+                print('Сообщение для подтверждения регистрации отправлено')
+                return HttpResponseRedirect(reverse('auth:login'))
+            else:
+                print('Ошибка отправки сообщения для подтверждения регистрации')
+                return HttpResponseRedirect(reverse('auth:login'))
+            # messages.success(request, self.success_message)
+            # return HttpResponseRedirect(self.success_url)
         return render(request, self.template_name, {'form': form, **self.extra_context})
 
 
@@ -130,5 +136,23 @@ def send_verify_mail(user):
     message = f'Для подтверждения учетной записи {user.username} на портале {settings.DOMAIN_NAME} перейдите по ' \
               f'ссылке: \n{settings.DOMAIN_NAME}{verify_link}'
 
-    print(f'from: {settings.EMAIL_HOST_USER}, to: {user.email}')
+    print(f'E-mail sent from: {settings.EMAIL_HOST_USER}, to: {user.email}')
     return send_mail(title, message, settings.EMAIL_HOST_USER, [user.email], fail_silently=False)
+
+
+def verify(request, email, activation_key):
+    try:
+        user = User.objects.get(email=email)
+        if user.activation_key == activation_key and not user.is_activation_key_expired():
+            print(f'User {user} is activated')
+            user.is_active = True
+            user.save()
+            auth.login(request, user)
+            return render(request, 'authapp/verification.html')
+        else:
+            print(f'Error activation user: {user}')
+            return render(request, 'authapp/verification.html')
+    except Exception as e:
+        print(f'Error activation user: {e.args}')
+    return HttpResponseRedirect(reverse('index'))
+

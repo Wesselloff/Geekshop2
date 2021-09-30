@@ -51,9 +51,9 @@ class UserRegisterForm(UserCreationForm):
         return name
 
     def save(self):
-        # user = super(UserRegisterForm).save()
-        user = super().save()
-        # user.is_active = False
+        user = super(UserRegisterForm, self).save()
+        # user = super().save()
+        user.is_active = False
         salt = sha1(str(random()).encode('utf8')).hexdigest()[:6]
         user.activation_key = sha1((user.email + salt).encode('utf8')).hexdigest()
         user.save()
