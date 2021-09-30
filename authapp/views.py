@@ -1,3 +1,4 @@
+from django.core.mail import send_mail
 from django.shortcuts import render, HttpResponseRedirect
 from django.contrib import auth
 from django.urls import reverse, reverse_lazy
@@ -6,22 +7,13 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import LoginView
 from django.views.generic.edit import CreateView, UpdateView
 from django.contrib.messages.views import SuccessMessageMixin
+from django.conf import settings
 
 from authapp.forms import UserLoginForm, UserRegisterForm, UserProfileForm
 from basketapp.models import Basket
 from authapp.models import User
 
 # Create your views here.
-
-class UserLoginView(LoginView):
-    authentication_form = UserLoginForm
-    template_name = 'authapp/login.html'
-    extra_context = {
-        'title': 'GeekShop - Авторизация',
-        'form_class': 'col-lg-5',
-        'header': 'Авторизация',
-    }
-    success_url = reverse_lazy('index')
 
 
 # def login(request):
@@ -45,7 +37,17 @@ class UserLoginView(LoginView):
 #     return render(request, 'authapp/login.html', context)
 
 
-class UserRegisterView(SuccessMessageMixin, CreateView):
+class UserLoginView(LoginView):
+    authentication_form = UserLoginForm
+    template_name = 'authapp/login.html'
+    extra_context = {
+        'title': 'GeekShop - Авторизация',
+        'form_class': 'col-lg-5',
+        'header': 'Авторизация',
+    }
+
+
+class UserRegisterView(CreateView):
     model = User
     template_name = 'authapp/register.html'
     form_class = UserRegisterForm
@@ -56,7 +58,18 @@ class UserRegisterView(SuccessMessageMixin, CreateView):
     }
     success_url = reverse_lazy('auth:login')
     success_message = 'Регистрация успешна!'
-    
+
+    def get(self, request, *args, **kwargs):
+        form = self.form_class()
+        return render(request, self.template_name, {'form': form, **self.extra_context})
+
+    def post(self, request, *args, **kwargs):
+        form = self.form_class(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, self.success_message)
+            return HttpResponseRedirect(self.success_url)
+        return render(request, self.template_name, {'form': form, **self.extra_context})
 
 
 # def register(request):
@@ -93,7 +106,6 @@ def logout(request):
 #     }
 
 
-
 @login_required
 def profile(request):
     if request.method == 'POST':
@@ -110,3 +122,13 @@ def profile(request):
         'baskets': Basket.objects.filter(user=request.user),
     }
     return render(request, 'authapp/profile.html', context)
+
+
+def send_verify_mail(user):
+    verify_link = reverse('auth:verify', args=[user.email, user.activation_key])
+    title = f'Подтверждение учетной записи {user.username}'
+    message = f'Для подтверждения учетной записи {user.username} на портале {settings.DOMAIN_NAME} перейдите по ' \
+              f'ссылке: \n{settings.DOMAIN_NAME}{verify_link}'
+
+    print(f'from: {settings.EMAIL_HOST_USER}, to: {user.email}')
+    return send_mail(title, message, settings.EMAIL_HOST_USER, [user.email], fail_silently=False)
