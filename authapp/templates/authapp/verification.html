@@ -1,16 +1,16 @@
 {% extends 'authapp/base.html' %}
 {% load static %}
 
-{% block container %}
-    {% if user %}
-        <h3>Поздравляем!</h3>
-        <br>
-        <h4>Пользователь {{ user.username }} подтвержден.</h4>
-    {% else %}
-        <h3>Верификация не пройдена.</h3>
-    {% endif %}
-    <br>
-    <button class="btn btn-round form-control">
-        <a href="{% url 'main:index' %}" class="">на главную</a>
-    </button>
+{% block form %}
+    <form action="{% url 'index' %}" method="post">
+        {% csrf_token %}
+        {% if user %}
+            <h4>Пользователь {{ user.username }} подтвержден.</h4>
+        {% else %}
+            <h3>Верификация не пройдена.</h3>
+        {% endif %}
+        <div class="form-group d-flex align-items-center justify-content-between mt-4 mb-0">
+            <input class="btn btn-primary" type="submit" value="На главную">
+        </div>
+    </form>
 {% endblock %}
